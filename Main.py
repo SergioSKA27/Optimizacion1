@@ -43,12 +43,12 @@ def print_restricciones(restricciones):
 
 st.divider()
 if obj == "Maximizar":
-    st.subheader("Función Objetivo:$$ Max\ Z = " + sp.latex(obf)+'$$')
+    st.subheader("$$ Max\ Z = " + sp.latex(obf)+'$$')
 else:
-    st.subheader("Función Objetivo:$$ Min Z = " + sp.latex(obf)+'$$')
+    st.subheader("$$ Min Z = " + sp.latex(obf)+'$$')
 
 st.write('Sujeto a: ')
-if len(restrictions[0]) > 0:
+if len(restrictions) and len(restrictions[0]) > 0  :
     print_restricciones(restrictions)
 
 
@@ -70,11 +70,12 @@ for i in range(len(restrictions)):
         f = sp.lambdify(x, restrictions[i]['exp'])
     interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf()+(-1*restrictions[i]['val']),x)[0]
     intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf()+(-1*restrictions[i]['val']),y)[0]
-    st.write(intery)
+    #st.write(intery)
     fig.add_trace(go.Scatter(x=np.linspace(rangeplt[0],rangeplt[1],100), y=f(np.linspace(rangeplt[0],rangeplt[1],100)), name="Restricción "+str(i+1), mode="lines"))
-    fig.add_trace(go.Scatter(x=[float(interx)], y=[0], mode="markers",marker=dict(size=5,color="black"),name=str(i+1)+" Intersección eje x "))
-    fig.add_trace(go.Scatter(x=[0], y=[float(intery)], mode="markers",marker=dict(size=5,color="black"),name=str(i+1)+" Intersección eje y "))
+    fig.add_trace(go.Scatter(x=[float(interx)], y=[0], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje x "))
+    fig.add_trace(go.Scatter(x=[0], y=[float(intery)], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje y "))
 
 fig.add_vline(x=0, line_width=1)
 fig.add_hline(y=0, line_width=1)
+fig.update_layout(title="Método Gráfico", xaxis_title="x", yaxis_title="y")
 st.plotly_chart(fig, use_container_width=True)
