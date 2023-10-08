@@ -20,10 +20,11 @@ with st.expander('Ayuda'):
     st.info("Ejemplo: 2*x + 3*y >= 10")
     st.info("Ejemplo: 2*x + 3*y = 10")
 
+st.divider()
 restrictions = []
 for i in range(numres):
     st.subheader("Restricción " + str(i+1))
-    cols = st.columns(3)
+    cols = st.columns([.4,.1,.4])
     with cols[0]:
         restexp = st.text_input("", key='sr'+str(i))
     with cols[1]:
@@ -53,7 +54,7 @@ if len(restrictions) and len(restrictions[0]) > 0  :
 
 
 
-rangeplt = st.slider("Rango de la gráfica", min_value=-10, max_value=10000, value=(-10,10), step=10)
+rangeplt = st.slider("Rango de la gráfica", min_value=-10, max_value=10000, value=10, step=10)
 
 fig = go.Figure()
 x, y = sp.symbols('x y')
@@ -71,7 +72,7 @@ for i in range(len(restrictions)):
     interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf()+(-1*restrictions[i]['val']),x)[0]
     intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf()+(-1*restrictions[i]['val']),y)[0]
     #st.write(intery)
-    fig.add_trace(go.Scatter(x=np.linspace(rangeplt[0],rangeplt[1],100), y=f(np.linspace(rangeplt[0],rangeplt[1],100)), name="Restricción "+str(i+1), mode="lines"))
+    fig.add_trace(go.Scatter(x=np.linspace(-10,rangeplt,100), y=f(np.linspace(-10,rangeplt,100)), name="Restricción "+str(i+1), mode="lines"))
     fig.add_trace(go.Scatter(x=[float(interx)], y=[0], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje x "))
     fig.add_trace(go.Scatter(x=[0], y=[float(intery)], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje y "))
 
