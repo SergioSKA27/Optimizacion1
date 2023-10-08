@@ -53,7 +53,7 @@ if len(restrictions[0]) > 0:
 
 
 
-rangeplt = st.slider("Rango de la gráfica", min_value=-100, max_value=100, value=(-10,10), step=1)
+rangeplt = st.slider("Rango de la gráfica", min_value=-10, max_value=10000, value=(-10,10), step=10)
 
 fig = go.Figure()
 x, y = sp.symbols('x y')
@@ -62,10 +62,18 @@ x, y = sp.symbols('x y')
 
 
 for i in range(len(restrictions)):
-    fr = sp.solve(restrictions[i]['exp'],y)
+    fr = sp.solve(restrictions[i]['exp']+(-1*restrictions[i]['val']),y)
     if  fr != []:
+        #st.write(fr)
         f = sp.lambdify(x, fr[0])
-    fig.add_trace(go.Scatter(x=np.linspace(rangeplt[0],rangeplt[1],100), y=f(np.linspace(rangeplt[0],rangeplt[1],100)), name="Restricción "+str(i), mode="lines",fill='tozeroy',opacity=0.5))
+    else:
+        f = sp.lambdify(x, restrictions[i]['exp'])
+    interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf()+(-1*restrictions[i]['val']),x)[0]
+    intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf()+(-1*restrictions[i]['val']),y)[0]
+    st.write(intery)
+    fig.add_trace(go.Scatter(x=np.linspace(rangeplt[0],rangeplt[1],100), y=f(np.linspace(rangeplt[0],rangeplt[1],100)), name="Restricción "+str(i+1), mode="lines"))
+    fig.add_trace(go.Scatter(x=[float(interx)], y=[0], mode="markers",marker=dict(size=5,color="black"),name=str(i+1)+" Intersección eje x "))
+    fig.add_trace(go.Scatter(x=[0], y=[float(intery)], mode="markers",marker=dict(size=5,color="black"),name=str(i+1)+" Intersección eje y "))
 
 fig.add_vline(x=0, line_width=1)
 fig.add_hline(y=0, line_width=1)
