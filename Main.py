@@ -170,7 +170,7 @@ def all_intersections(expr):
     return inter
 
 inters = list(all_intersections(np.array(list(combinations(exp,2)))))
-
+st.write(inters)
 st.write('Intersecciones',np.array(intersections))
 maxif = inters+intersections+[[0,0]]
 
