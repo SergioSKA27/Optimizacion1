@@ -169,16 +169,17 @@ def all_intersections(expr):
 
     return inter
 
-intersections = list(all_intersections(np.array(list(combinations(exp,2)))))
+inters = list(all_intersections(np.array(list(combinations(exp,2)))))
 
 st.write('Intersecciones',np.array(intersections))
-maxif = intersections+intersections
-if satisfy_rest([0,0],restrictions):
-    maxif.append([0,0])
+maxif = inters+intersections+[[0,0]]
+
 maxfilter = []
+
 for i in range(len(maxif)):
     if satisfy_rest(maxif[i],restrictions):
         maxfilter.append(list(maxif[i]))
+
 maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
 #st.write(maxfilter)
 def max_value(vals, func):
