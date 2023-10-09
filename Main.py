@@ -110,8 +110,6 @@ exp = [restrictions[i]['exp']+(-1*restrictions[i]['val']) for i in range(len(res
 
 def satisfy_rest(point, restr):
     flag = True
-    if point[0] < 0 or point[1] < 0:
-        return False
     for i in range(len(restr)):
         if restr[i]['op'] == "≤":
             if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() > restr[i]['val']:
@@ -161,13 +159,11 @@ def all_intersections(expr):
             b.append(f2[-1]*-1)
             del(f2[-1])
 
-        if len(f1) == 2 and len(f2) == 2:
-            m = sp.Matrix([f1,f2])
+        m = sp.Matrix([f1,f2])
 
-            if m.det() != 0:
-                arrr = np.ravel((m.inv()*sp.Matrix(b)),order='F').astype(float)
-                if arrr[0] > 0 and arrr[1] > 0:
-                    inter.append(arrr)
+        if m.det() != 0:
+            arrr = np.ravel((m.inv()*sp.Matrix(b)),order='F').astype(float)
+            inter.append(arrr)
         else:
             continue
 
@@ -185,7 +181,6 @@ for i in range(len(maxif)):
         maxfilter.append(list(maxif[i]))
 maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
 #st.write(maxfilter)
-maxfilter = np.array(maxif)
 def max_value(vals, func):
     """
     The function `max_value` takes a list of values and a mathematical function, and returns the maximum value of the
