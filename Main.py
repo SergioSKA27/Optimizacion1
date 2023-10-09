@@ -160,8 +160,10 @@ def all_intersections(expr):
             b.append(f2[-1]*-1)
             del(f2[-1])
 
-        m = sp.Matrix([f1,f2])
-
+        try:
+            m = sp.Matrix([f1,f2])
+        except:
+            continue
         if m.det() != 0:
             arrr = np.ravel((m.inv()*sp.Matrix(b)),order='F').astype(float)
             inter.append(arrr)
@@ -207,7 +209,30 @@ def max_value(vals, func):
 
     return max(maxx), vals[maxx.index(max(maxx))]
 
-valsmax = max_value(maxfilter,obf)
+
+def min_value(vals, func):
+    """
+    The function `max_value` takes a list of values and a mathematical function, and returns the maximum value of the
+    function along with the corresponding input values.
+
+    :param vals: The `vals` parameter is a list of tuples. Each tuple represents a set of values for the variables `x` and
+    `y`. For example, `vals = [(1, 2), (3, 4), (5, 6)]` represents three sets of values: `
+    :param func: The parameter `func` is a symbolic expression or function that represents a mathematical function. It can
+    be an expression involving variables like `x` and `y`, or it can be a predefined function like `sin(x)` or `exp(x)`. The
+    `subs` method is used to substitute specific
+    :return: The function `max_value` returns two values: `maxx` and `vals[maxx.index(max(maxx))]`.
+    """
+    minn = []
+
+    for i in range(len(vals)):
+        minn.append(func.subs({x:vals[i][0],y:vals[i][1]}).evalf())
+
+    return min(minn), vals[minn.index(min(minn))]
+
+if obj == "Minimizar":
+    valsmax = min_value(maxfilter,obf)
+else:
+    valsmax = max_value(maxfilter,obf)
 
 st.subheader("Solución Optima")
 
