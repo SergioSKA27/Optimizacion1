@@ -69,7 +69,7 @@ st.latex(str(obf.free_symbols)+ ' ≥ 0')
 
 colsg = st.columns([.3,.7])
 with colsg[0]:
-    maxg = st.number_input('Maximo de la gráfica', min_value=0, max_value=10000, value=10, step=10)
+    maxg = st.number_input('Maximo de la gráfica', min_value=0, max_value=1000000, value=10, step=10)
 with colsg[1]:
     rangeplt = st.slider("Rango de la gráfica", min_value=0, max_value=maxg, value=10, step=maxg//10)
 
