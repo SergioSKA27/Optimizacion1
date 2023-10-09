@@ -181,7 +181,8 @@ for i in range(len(maxif)):
         maxfilter.append(list(maxif[i]))
 
 maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
-#st.write(maxfilter)
+st.header("Puntos Factibles")
+st.write(maxfilter)
 def max_value(vals, func):
     """
     The function `max_value` takes a list of values and a mathematical function, and returns the maximum value of the
