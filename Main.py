@@ -56,7 +56,12 @@ if len(restrictions) and len(restrictions[0]) > 0  :
 
 st.latex(str(obf.free_symbols)+ ' ≥ 0')
 
-rangeplt = st.slider("Rango de la gráfica", min_value=-10, max_value=10000, value=10, step=10)
+colsg = st.columns([.3,.7])
+with colsg[0]:
+    maxg = st.number_input('Maximo de la gráfica', min_value=0, max_value=10000, value=10, step=10)
+with colsg[1]:
+    rangeplt = st.slider("Rango de la gráfica", min_value=0, max_value=maxg, value=10, step=maxg//10)
+
 
 fig = go.Figure()
 x, y = sp.symbols('x y')
@@ -73,12 +78,16 @@ for i in range(len(restrictions)):
             f = sp.lambdify(x, fr[0])
         else:
             f = sp.lambdify(x, restrictions[i]['exp'])
-        interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf()+(-1*restrictions[i]['val']),x)[0]
-        intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf()+(-1*restrictions[i]['val']),y)[0]
+        if restrictions[i]['val'] != 0:
+            interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf()+(-1*restrictions[i]['val']),x)[0]
+            intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf()+(-1*restrictions[i]['val']),y)[0]
+        else:
+            interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf(),x)[0]
+            intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf(),y)[0]
         intersections.append([float(interx),0])
         intersections.append([0,float(intery)])
         #st.write(intery)
-        fig.add_trace(go.Scatter(x=np.linspace(-10,rangeplt,100), y=f(np.linspace(-10,rangeplt,100)), name="Restricción "+str(i+1), mode="lines"))
+        fig.add_trace(go.Scatter(x=np.linspace(0,rangeplt,1000), y=f(np.linspace(0,rangeplt,1000)), name="Restricción "+str(i+1), mode="lines"))
         fig.add_trace(go.Scatter(x=[float(interx)], y=[0], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje x "))
         fig.add_trace(go.Scatter(x=[0], y=[float(intery)], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje y "))
 
@@ -88,24 +97,37 @@ fig.update_layout(title="Método Gráfico", xaxis_title="x", yaxis_title="y")
 st.plotly_chart(fig, use_container_width=True)
 
 
-exp = [restrictions[i]['exp']+(-1*restrictions[i]['val']) for i in range(len(restrictions))]
+exp = []
 
+for i in range(len(restrictions)):
+    if restrictions[i]['val'] != 0:
+        exp.append(restrictions[i]['exp']+(-1*restrictions[i]['val']))
+    else:
+        exp.append(restrictions[i]['exp'])
 st.write(np.array(list(combinations(exp,2))))
 
 
 def satisfy_rest(point, restr):
     flag = True
+    if point[0] < 0 or point[1] < 0:
+        return False
     for i in range(len(restr)):
         if restr[i]['op'] == "≤":
-            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() > restr[i]['val']:
+            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() <= restr[i]['val']:
+                continue
+            else:
                 flag = False
                 break
         elif restr[i]['op'] == "≥":
-            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() < restr[i]['val']:
+            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() >= restr[i]['val']:
+                continue
+            else:
                 flag = False
                 break
         elif restr[i]['op'] == "=":
-            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() != restr[i]['val']:
+            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() == restr[i]['val']:
+                continue
+            else:
                 flag = False
                 break
     return flag
@@ -143,21 +165,32 @@ def all_intersections(expr):
             f2 =  sp.Poly(expr[i][1]).coeffs()
             b.append(f2[-1]*-1)
             del(f2[-1])
-        m = sp.Matrix([f1,f2])
 
-        if m.det() != 0:
-            inter.append(np.round(np.ravel((m.inv()*sp.Matrix(b)),order='F').astype(float)))
+        if len(f1) == 2 and len(f2) == 2:
+            m = sp.Matrix([f1,f2])
+
+            if m.det() != 0:
+                arrr = np.ravel((m.inv()*sp.Matrix(b)),order='F').astype(float)
+                if arrr[0] > 0 and arrr[1] > 0:
+                    inter.append(arrr)
+        else:
+            continue
 
     return inter
 
-maxif = list(all_intersections(np.array(list(combinations(exp,2)))))+intersections+[[0,0]]
+intersections = list(all_intersections(np.array(list(combinations(exp,2)))))
+
+st.write('Intersecciones',np.array(intersections))
+maxif = intersections+intersections
+if satisfy_rest([0,0],restrictions):
+    maxif.append([0,0])
 maxfilter = []
 for i in range(len(maxif)):
     if satisfy_rest(maxif[i],restrictions):
         maxfilter.append(list(maxif[i]))
 maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
 st.write(maxfilter)
-
+maxfilter = np.array(maxif)
 def max_value(vals, func):
     """
     The function `max_value` takes a list of values and a mathematical function, and returns the maximum value of the
@@ -205,7 +238,7 @@ for i in range(len(restrictions)):
         else:
             f = sp.lambdify(x, restrictions[i]['exp'])
 
-        fig2.add_trace(go.Scatter(x=np.linspace(-10,rangeplt,100), y=f(np.linspace(-10,rangeplt,100)), name="Restricción "+str(i+1), mode="lines"))
+        fig2.add_trace(go.Scatter(x=np.linspace(0,rangeplt,1000), y=f(np.linspace(0,rangeplt,1000)), name="Restricción "+str(i+1), mode="lines"))
 fig2.add_vline(x=0, line_width=1)
 fig2.add_hline(y=0, line_width=1)
 fig2.update_layout(title="Región Factible", xaxis_title="x", yaxis_title="y")
