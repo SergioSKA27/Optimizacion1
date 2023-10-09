@@ -6,24 +6,32 @@ from itertools import combinations
 #Autor: Sergio Demis Lopez Martinez, 2023.
 #set the configuration
 st.set_page_config(page_title="Método Gráfico", page_icon=":bar_chart:", layout="wide", initial_sidebar_state="collapsed")
-
+#.....................................Data Input.............................................
 st.title("Metodo Gráfico")
 st.divider()
+#Lee la función objetivo
 objfunc = st.text_input("Ingrese la función objetivo: ",'2x + 3y')
+#La transforma a una expresión simbólica
 obf = sp.parse_expr(objfunc.strip(),transformations='all')
 with st.expander('Ayuda'):
+#Muestra la ayuda para ingresar la función objetivo
     st.info("Ejemplo: 2*x + 3*y")
+#Se selecciona el tipo de problema
 obj = st.selectbox("Seleccione el tipo de problema: ", ("Maximizar", "Minimizar"))
 
+#Lee el número de restricciones
 numres = st.number_input("Ingrese el número de restricciones: ", min_value=1, max_value=10, value=1, step=1)
 
 with st.expander('Ayuda'):
+#Muestra la ayuda para ingresar las restricciones
     st.info("Ejemplo: 2*x + 3*y <= 10")
     st.info("Ejemplo: 2*x + 3*y >= 10")
     st.info("Ejemplo: 2*x + 3*y = 10")
 
 st.divider()
 restrictions = []
+# Lee las restricciones y las almacena en una lista de diccionarios
+# Cada diccionario contiene la expresión(exp), el operador(op) y el valor de la restricción(val)
 for i in range(numres):
     st.subheader("Restricción " + str(i+1))
     cols = st.columns([.4,.1,.4])
@@ -45,11 +53,13 @@ def print_restricciones(restricciones):
         st.latex(sp.latex(restricciones[i]['exp']) + restricciones[i]['op'] + str(restricciones[i]['val']))
 
 st.divider()
+#Imprime la función objetivo en latex
 if obj == "Maximizar":
     st.subheader("$$ Max\ Z = " + sp.latex(obf)+'$$')
 else:
     st.subheader("$$ Min Z = " + sp.latex(obf)+'$$')
 
+#Imprime las restricciones en latex
 st.write('Sujeto a: ')
 if len(restrictions) and len(restrictions[0]) > 0  :
     print_restricciones(restrictions)
@@ -62,14 +72,15 @@ with colsg[0]:
 with colsg[1]:
     rangeplt = st.slider("Rango de la gráfica", min_value=0, max_value=maxg, value=10, step=maxg//10)
 
-
+#.....................................Plot Restrictions.............................................
+#Creamos una figura
 fig = go.Figure()
 x, y = sp.symbols('x y')
 
 intersections = []
 
 
-
+#Agregamos las restricciones a la figura y calculamos las intersecciones con los ejes
 for i in range(len(restrictions)):
     if restrictions[i]['op'] == "≤" or restrictions[i]['op'] == "≥":
         fr = sp.solve(restrictions[i]['exp']+(-1*restrictions[i]['val']),y)
@@ -78,12 +89,9 @@ for i in range(len(restrictions)):
             f = sp.lambdify(x, fr[0])
         else:
             f = sp.lambdify(x, restrictions[i]['exp'])
-        if restrictions[i]['val'] != 0:
-            interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf()+(-1*restrictions[i]['val']),x)[0]
-            intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf()+(-1*restrictions[i]['val']),y)[0]
-        else:
-            interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf(),x)[0]
-            intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf(),y)[0]
+
+        interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf(),x)[0]
+        intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf(),y)[0]
         intersections.append([float(interx),0])
         intersections.append([0,float(intery)])
         #st.write(intery)
@@ -97,14 +105,7 @@ fig.update_layout(title="Método Gráfico", xaxis_title="x", yaxis_title="y")
 st.plotly_chart(fig, use_container_width=True)
 
 
-exp = []
-
-for i in range(len(restrictions)):
-    if restrictions[i]['val'] != 0:
-        exp.append(restrictions[i]['exp']+(-1*restrictions[i]['val']))
-    else:
-        exp.append(restrictions[i]['exp'])
-st.write(np.array(list(combinations(exp,2))))
+exp = [restrictions[i]['exp']+(-1*restrictions[i]['val']) for i in range(len(restrictions)) ]
 
 
 def satisfy_rest(point, restr):
@@ -188,8 +189,8 @@ maxfilter = []
 for i in range(len(maxif)):
     if satisfy_rest(maxif[i],restrictions):
         maxfilter.append(list(maxif[i]))
-maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
-st.write(maxfilter)
+#maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
+#st.write(maxfilter)
 maxfilter = np.array(maxif)
 def max_value(vals, func):
     """
