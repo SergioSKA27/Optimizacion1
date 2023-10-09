@@ -5,10 +5,10 @@ import plotly.graph_objects as go
 from itertools import combinations
 #Autor: Sergio Demis Lopez Martinez, 2023.
 #set the configuration
-st.set_page_config(page_title="Método Gráfico", page_icon=":bar_chart:", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Método Gráfico", page_icon=":bar_chart:", layout="wide", initial_sidebar_state="collapsed")
 
 st.title("Metodo Gráfico")
-
+st.divider()
 objfunc = st.text_input("Ingrese la función objetivo: ",'2x + 3y')
 obf = sp.parse_expr(objfunc.strip(),transformations='all')
 with st.expander('Ayuda'):
@@ -93,44 +93,22 @@ exp = [restrictions[i]['exp']+(-1*restrictions[i]['val']) for i in range(len(res
 st.write(np.array(list(combinations(exp,2))))
 
 
-@st.cache_data
-def factible_region(expr,rangeplt):
-    ys = []
-    xs = []
-    x,y = sp.symbols('x y')
-    for i in range(len(expr)):
-        x_range = np.linspace(-10,rangeplt,100)
-        if expr[i][0].free_symbols == {x}:
-            f1 =  sp.lambdify(x, expr[i][0])
-        elif expr[i][0].free_symbols == {x,y}:
-            f1 =  sp.lambdify([x,y], expr[i][0])
-        if expr[i][1].free_symbols == {x}:
-            f2 =  sp.lambdify(x, expr[i][1])
-        elif expr[i][1].free_symbols == {x,y}:
-            f2 =  sp.lambdify([x,y], expr[i][1])
-
-        y_range = np.linspace(-10,max(max(sp.lambdify(x,sp.solve(expr[i][0],y)[0])(x_range)),max(sp.lambdify(x,sp.solve(expr[i][1],y)[0])(x_range))),100)
-        x_grid, y_grid = np.meshgrid(x_range, y_range)
-        if expr[i][0].free_symbols == {x,y}:
-            z1 = f1(x_grid,y_grid)
-        elif expr[i][0].free_symbols == {x}:
-            z1 = f1(x_grid)
-        if expr[i][1].free_symbols == {x,y}:
-            z2 = f2(x_grid,y_grid)
-        elif expr[i][1].free_symbols == {x}:
-            z2 = f2(x_grid)
-        ys.append(z1)
-        ys.append(z2)
-    return ys,x_grid
-
-
-
-
-region = factible_region(np.array(list(combinations(exp,2))),rangeplt)
-st.write(region[0], len(region[1]))
-
-
-st.write(sp.Poly(restrictions[0]['exp']+(-1*restrictions[0]['val'])).coeffs())
+def satisfy_rest(point, restr):
+    flag = True
+    for i in range(len(restr)):
+        if restr[i]['op'] == "≤":
+            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() > restr[i]['val']:
+                flag = False
+                break
+        elif restr[i]['op'] == "≥":
+            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() < restr[i]['val']:
+                flag = False
+                break
+        elif restr[i]['op'] == "=":
+            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() != restr[i]['val']:
+                flag = False
+                break
+    return flag
 
 
 def all_intersections(expr):
@@ -173,7 +151,12 @@ def all_intersections(expr):
     return inter
 
 maxif = list(all_intersections(np.array(list(combinations(exp,2)))))+intersections+[[0,0]]
-
+maxfilter = []
+for i in range(len(maxif)):
+    if satisfy_rest(maxif[i],restrictions):
+        maxfilter.append(list(maxif[i]))
+maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
+st.write(maxfilter)
 
 def max_value(vals, func):
     """
@@ -192,6 +175,38 @@ def max_value(vals, func):
     for i in range(len(vals)):
         maxx.append(func.subs({x:vals[i][0],y:vals[i][1]}).evalf())
 
-    return maxx, vals[maxx.index(max(maxx))]
+    return max(maxx), vals[maxx.index(max(maxx))]
 
-st.write(max_value(maxif,obf)[0])
+valsmax = max_value(maxfilter,obf)
+
+st.subheader("Solución Optima")
+
+st.latex('Z \ ='+str(valsmax[0]))
+st.latex('x_1 \ ='+str(valsmax[1][0])+',\ \ \ y_1 \ ='+str(valsmax[1][1]))
+
+
+colorfact = st.color_picker("Color de la región factible", "#73D673")
+
+fig2 = go.Figure()
+
+fig2.add_trace(go.Scatter(x=maxfilter[:,0], y=maxfilter[:,1], mode="markers",
+marker=dict(size=5,color="blue"),name="Puntos factibles",fill='toself',fillcolor=colorfact,
+text=['Point A', 'Point B', 'Area'],textposition='top center',
+))
+
+
+
+for i in range(len(restrictions)):
+    if restrictions[i]['op'] == "≤" or restrictions[i]['op'] == "≥":
+        fr = sp.solve(restrictions[i]['exp']+(-1*restrictions[i]['val']),y)
+        if  fr != []:
+            #st.write(fr)
+            f = sp.lambdify(x, fr[0])
+        else:
+            f = sp.lambdify(x, restrictions[i]['exp'])
+
+        fig2.add_trace(go.Scatter(x=np.linspace(-10,rangeplt,100), y=f(np.linspace(-10,rangeplt,100)), name="Restricción "+str(i+1), mode="lines"))
+fig2.add_vline(x=0, line_width=1)
+fig2.add_hline(y=0, line_width=1)
+fig2.update_layout(title="Región Factible", xaxis_title="x", yaxis_title="y")
+st.plotly_chart(fig2, use_container_width=True)
