@@ -90,8 +90,8 @@ for i in range(len(restrictions)):
         else:
             f = sp.lambdify(x, restrictions[i]['exp'])
 
-        interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf(),x)[0]
-        intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf(),y)[0]
+        interx = sp.solve(restrictions[i]['exp'].subs({y:0}).evalf()+(-1*restrictions[i]['val']),x)[0]
+        intery = sp.solve(restrictions[i]['exp'].subs({x:0}).evalf()+(-1*restrictions[i]['val']),y)[0]
         intersections.append([float(interx),0])
         intersections.append([0,float(intery)])
         #st.write(intery)
