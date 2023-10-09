@@ -114,21 +114,15 @@ def satisfy_rest(point, restr):
         return False
     for i in range(len(restr)):
         if restr[i]['op'] == "≤":
-            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() <= restr[i]['val']:
-                continue
-            else:
+            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() > restr[i]['val']:
                 flag = False
                 break
         elif restr[i]['op'] == "≥":
-            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() >= restr[i]['val']:
-                continue
-            else:
+            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() < restr[i]['val']:
                 flag = False
                 break
         elif restr[i]['op'] == "=":
-            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() == restr[i]['val']:
-                continue
-            else:
+            if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() != restr[i]['val']:
                 flag = False
                 break
     return flag
@@ -189,7 +183,7 @@ maxfilter = []
 for i in range(len(maxif)):
     if satisfy_rest(maxif[i],restrictions):
         maxfilter.append(list(maxif[i]))
-#maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
+maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
 #st.write(maxfilter)
 maxfilter = np.array(maxif)
 def max_value(vals, func):
