@@ -3,6 +3,7 @@ import sympy as sp
 import numpy as np
 import plotly.graph_objects as go
 from itertools import combinations
+import pandas as pd
 #Autor: Sergio Demis Lopez Martinez, 2023.
 #set the configuration
 st.set_page_config(page_title="Método Gráfico", page_icon=":bar_chart:", layout="wide", initial_sidebar_state="collapsed")
@@ -169,9 +170,13 @@ def all_intersections(expr):
 
     return inter
 
+st.write('Intersecciones con los ejes: ',pd.DataFrame(np.array(intersections).T,index=['x','y']))
+st.write('Sistemas de ecuaciones: ' ,np.array(list(combinations(exp,2))))
+
 inters = list(all_intersections(np.array(list(combinations(exp,2)))))
-st.write(inters)
-st.write('Intersecciones',np.array(intersections))
+st.write('Intersecciones entre las restricciones: ')
+st.write(pd.DataFrame(np.array(inters).T,index=['x','y']))
+
 maxif = inters+intersections+[[0,0]]
 
 maxfilter = []
@@ -181,8 +186,8 @@ for i in range(len(maxif)):
         maxfilter.append(list(maxif[i]))
 
 maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
-st.header("Puntos Factibles")
-st.write(maxfilter)
+st.write("Puntos Factibles")
+st.write(pd.DataFrame(np.array(maxfilter).T,index=['x','y']))
 def max_value(vals, func):
     """
     The function `max_value` takes a list of values and a mathematical function, and returns the maximum value of the
