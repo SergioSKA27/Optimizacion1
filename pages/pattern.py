@@ -33,5 +33,16 @@ def print_rangoli(size):
 
 
 s = st.slider("Tamaño del patrón", 0, 26, 3, 1, key="size", help="Tamaño del patrón")
-
+if st.checkbox("Mostrar patrón en animación", key="anim"):
+    import time
+    #show the pattern in animation  from 0 to 26 an back in infinite loop
+    it = 0
+    while True:
+        for i in range(0, 26):
+            st.text(print_rangoli(it))
+            time.sleep(0.1)
+        if  it != 26 and it != 0:
+            it = it + 1
+        else:
+            it = it - 1
 st.text(print_rangoli(s))
