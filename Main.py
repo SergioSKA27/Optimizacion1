@@ -111,6 +111,8 @@ exp = [restrictions[i]['exp']+(-1*restrictions[i]['val']) for i in range(len(res
 
 def satisfy_rest(point, restr):
     flag = True
+    if point[0] < 0 or point[1] < 0:
+        return False
     for i in range(len(restr)):
         if restr[i]['op'] == "≤":
             if restr[i]['exp'].subs({x:point[0],y:point[1]}).evalf() > restr[i]['val']:
