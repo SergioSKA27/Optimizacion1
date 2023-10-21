@@ -83,7 +83,7 @@ intersections = []
 
 #Agregamos las restricciones a la figura y calculamos las intersecciones con los ejes
 for i in range(len(restrictions)):
-    if restrictions[i]['op'] == "≤" or restrictions[i]['op'] == "≥":
+    if(restrictions[i]['op'] == "≤" or restrictions[i]['op'] == "≥" or restrictions[i]['op'] == "=") and len(restrictions[i]['exp'].free_symbols) == 2:
         fr = sp.solve(restrictions[i]['exp']+(-1*restrictions[i]['val']),y)
         if  fr != []:
             #st.write(fr)
@@ -100,6 +100,18 @@ for i in range(len(restrictions)):
         fig.add_trace(go.Scatter(x=[float(interx)], y=[0], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje x "))
         fig.add_trace(go.Scatter(x=[0], y=[float(intery)], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje y "))
 
+    elif(restrictions[i]['op'] == "≤" or restrictions[i]['op'] == "≥" or restrictions[i]['op'] == "=") and len(restrictions[i]['exp'].free_symbols) == 1:
+        #The restriction is a constant
+        if restrictions[i]['exp'].free_symbols == {x}:
+            f = sp.lambdify(x, restrictions[i]['exp'])
+            fig.add_vline(x=restrictions[i]['val'], line_width=1, name="Restricción "+str(i+1))
+            fig.add_trace(go.Scatter(x=[restrictions[i]['val']], y=[0], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje x "))
+        elif restrictions[i]['exp'].free_symbols == {y}:
+            f = sp.lambdify(y, restrictions[i]['exp'])
+            fig.add_hline(y=restrictions[i]['val'], line_width=1, name="Restricción "+str(i+1))
+            fig.add_trace(go.Scatter(x=[0], y=[restrictions[i]['val']], mode="markers",marker=dict(size=5,color="red"),name=str(i+1)+" Intersección eje y "))
+
+
 fig.add_vline(x=0, line_width=1)
 fig.add_hline(y=0, line_width=1)
 fig.update_layout(title="Método Gráfico", xaxis_title="x", yaxis_title="y")
@@ -109,6 +121,7 @@ st.plotly_chart(fig, use_container_width=True)
 exp = [restrictions[i]['exp']+(-1*restrictions[i]['val']) for i in range(len(restrictions)) ]
 
 
+#---------------------------------Calculate the feasible region---------------------------------
 def satisfy_rest(point, restr):
     flag = True
     if point[0] < 0 or point[1] < 0:
@@ -128,7 +141,7 @@ def satisfy_rest(point, restr):
                 break
     return flag
 
-
+@st.cache_data
 def all_intersections(expr):
     """
     The function `all_intersections` takes in a list of expressions and returns the coordinates of all intersections between
@@ -152,6 +165,12 @@ def all_intersections(expr):
             f1 =  sp.Poly(expr[i][0]).coeffs()
             b.append(f1[-1]*-1)
             del(f1[-1])
+        elif expr[i][0].free_symbols == {y}:
+            f1 =  sp.Poly(expr[i][0]).coeffs()
+            f1.insert(0,0)
+            b.append(f1[-1]*-1)
+            del(f1[-1])
+
         if expr[i][1].free_symbols == {x}:
             f2 =  sp.Poly(expr[i][1]).coeffs()
             f2.insert(1,0)
@@ -159,6 +178,11 @@ def all_intersections(expr):
             del(f2[-1])
         elif expr[i][1].free_symbols == {x,y}:
             f2 =  sp.Poly(expr[i][1]).coeffs()
+            b.append(f2[-1]*-1)
+            del(f2[-1])
+        elif expr[i][1].free_symbols == {y}:
+            f2 =  sp.Poly(expr[i][1]).coeffs()
+            f2.insert(0,0)
             b.append(f2[-1]*-1)
             del(f2[-1])
 
@@ -174,24 +198,6 @@ def all_intersections(expr):
 
     return inter
 
-st.write('Intersecciones con los ejes: ',pd.DataFrame(np.array(intersections).T,index=['x','y']))
-st.write('Sistemas de ecuaciones: ' ,np.array(list(combinations(exp,2))))
-
-inters = list(all_intersections(np.array(list(combinations(exp,2)))))
-st.write('Intersecciones entre las restricciones: ')
-st.write(pd.DataFrame(np.array(inters).T,index=['x','y']))
-
-maxif = inters+intersections+[[0,0]]
-
-maxfilter = []
-
-for i in range(len(maxif)):
-    if satisfy_rest(maxif[i],restrictions):
-        maxfilter.append(list(maxif[i]))
-
-maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
-st.write("Puntos Factibles")
-st.write(pd.DataFrame(np.array(maxfilter).T,index=['x','y']))
 def max_value(vals, func):
     """
     The function `max_value` takes a list of values and a mathematical function, and returns the maximum value of the
@@ -210,7 +216,6 @@ def max_value(vals, func):
         maxx.append(func.subs({x:vals[i][0],y:vals[i][1]}).evalf())
 
     return max(maxx), vals[maxx.index(max(maxx))]
-
 
 def min_value(vals, func):
     """
@@ -231,39 +236,76 @@ def min_value(vals, func):
 
     return min(minn), vals[minn.index(min(minn))]
 
-if obj == "Minimizar":
-    valsmax = min_value(maxfilter,obf)
-else:
-    valsmax = max_value(maxfilter,obf)
-
-st.subheader("Solución Optima")
-
-st.latex('Z \ ='+str(valsmax[0]))
-st.latex('x_1 \ ='+str(valsmax[1][0])+',\ \ \ y_1 \ ='+str(valsmax[1][1]))
 
 
-colorfact = st.color_picker("Color de la región factible", "#73D673")
+st.session_state['color_region'] = st.color_picker("Color de la región factible", "#73D673")
+colorfact = st.session_state['color_region']
 
-fig2 = go.Figure()
+if st.button("Calcular"):
+    colss = st.columns(3)
+    with colss[0]:
+        st.write('Intersecciones con los ejes: ',pd.DataFrame(np.array(intersections),columns=['x','y']))
 
-fig2.add_trace(go.Scatter(x=maxfilter[:,0], y=maxfilter[:,1], mode="markers",
-marker=dict(size=5,color="blue"),name="Puntos factibles",fill='toself',fillcolor=colorfact,
-text=['Point A', 'Point B', 'Area'],textposition='top center',
-))
+    with colss[1]:
+        st.write('Sistemas de ecuaciones: ' ,pd.DataFrame(np.array(list(combinations(exp,2))),columns=['Ecuación 1','Ecuación 2']))
+
+    inters = list(all_intersections(np.array(list(combinations(exp,2)))))
+    with colss[2]:
+        st.write('Intersecciones entre las restricciones: ')
+        st.write(pd.DataFrame(np.array(inters),columns=['x','y']))
+
+    maxif = inters+intersections+[[0,0]]
+
+    maxfilter = []
+
+    for i in range(len(maxif)):
+        if satisfy_rest(maxif[i],restrictions):
+            maxfilter.append(list(maxif[i]))
+
+    maxfilter = np.array(sorted(maxfilter,key=lambda x: (x[0], x[1])))
+    colss2 = st.columns([.4,.6])
+    with colss2[0]:
+        st.write("Puntos Factibles")
+        st.write(pd.DataFrame(np.array(maxfilter),columns=['x','y']))
+
+    if obj == "Minimizar":
+        valsmax = min_value(maxfilter,obf)
+    else:
+        valsmax = max_value(maxfilter,obf)
+
+    with colss2[1]:
+        st.subheader("Solución Optima")
+        st.latex('Z \ ='+str(valsmax[0]))
+        st.latex('x_1 \ ='+str(valsmax[1][0])+',\ \ \ y_1 \ ='+str(valsmax[1][1]))
+
+    fig2 = go.Figure()
+
+    fig2.add_trace(go.Scatter(x=maxfilter[:,0], y=maxfilter[:,1], mode="markers",
+    marker=dict(size=5,color="blue"),name="Puntos factibles",fill='toself',fillcolor=colorfact,
+    text=['Point A', 'Point B', 'Area'],textposition='top center',
+    ))
 
 
 
-for i in range(len(restrictions)):
-    if restrictions[i]['op'] == "≤" or restrictions[i]['op'] == "≥":
-        fr = sp.solve(restrictions[i]['exp']+(-1*restrictions[i]['val']),y)
-        if  fr != []:
-            #st.write(fr)
-            f = sp.lambdify(x, fr[0])
-        else:
-            f = sp.lambdify(x, restrictions[i]['exp'])
+    for i in range(len(restrictions)):
+        if (restrictions[i]['op'] == "≤" or restrictions[i]['op'] == "≥" or restrictions[i]['op'] == "=") and len(restrictions[i]['exp'].free_symbols) == 2:
+            fr = sp.solve(restrictions[i]['exp']+(-1*restrictions[i]['val']),y)
+            if  fr != []:
+                #st.write(fr)
+                f = sp.lambdify(x, fr[0])
+            else:
+                f = sp.lambdify(x, restrictions[i]['exp'])
+            fig2.add_trace(go.Scatter(x=np.linspace(0,rangeplt,1000), y=f(np.linspace(0,rangeplt,1000)), name="Restricción "+str(i+1), mode="lines"))
+        elif (restrictions[i]['op'] == "≤" or restrictions[i]['op'] == "≥" or restrictions[i]['op'] == "=") and len(restrictions[i]['exp'].free_symbols) == 1:
+            #The restriction is a constant
+            if restrictions[i]['exp'].free_symbols == {x}:
+                f = sp.lambdify(x, restrictions[i]['exp'])
+                fig2.add_vline(x=restrictions[i]['val'], line_width=1, name="Restricción "+str(i+1))
+            elif restrictions[i]['exp'].free_symbols == {y}:
+                f = sp.lambdify(y, restrictions[i]['exp'])
+                fig2.add_hline(y=restrictions[i]['val'], line_width=1, name="Restricción "+str(i+1))
 
-        fig2.add_trace(go.Scatter(x=np.linspace(0,rangeplt,1000), y=f(np.linspace(0,rangeplt,1000)), name="Restricción "+str(i+1), mode="lines"))
-fig2.add_vline(x=0, line_width=1)
-fig2.add_hline(y=0, line_width=1)
-fig2.update_layout(title="Región Factible", xaxis_title="x", yaxis_title="y")
-st.plotly_chart(fig2, use_container_width=True)
+    fig2.add_vline(x=0, line_width=1)
+    fig2.add_hline(y=0, line_width=1)
+    fig2.update_layout(title="Región Factible", xaxis_title="x", yaxis_title="y")
+    st.plotly_chart(fig2, use_container_width=True)

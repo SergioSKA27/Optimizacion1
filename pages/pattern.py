@@ -10,6 +10,14 @@ st.set_page_config(page_title="Método Gráfico", page_icon=":bar_chart:", layou
 
 @st.cache_data
 def print_rangoli(size):
+    """
+    The function `print_rangoli` takes a size as input and prints a rangoli pattern made of letters.
+
+    :param size: The size parameter determines the size of the rangoli pattern. It represents the number of letters in the
+    pattern
+    :return: The function `print_rangoli` returns a string `sr` which represents a pattern of letters arranged in the shape
+    of a rangoli.
+    """
     letters = [chr(n) for n in range(ord("a"), ord("a")+size)]
     letters = letters[::-1]
     r = 2*(size+(size-1))-1
@@ -33,16 +41,4 @@ def print_rangoli(size):
 
 
 s = st.slider("Tamaño del patrón", 0, 26, 3, 1, key="size", help="Tamaño del patrón")
-if st.checkbox("Mostrar patrón en animación", key="anim"):
-    import time
-    #show the pattern in animation  from 0 to 26 an back in infinite loop
-    it = 0
-    while True:
-        for i in range(0, 26):
-            st.text(print_rangoli(it))
-            time.sleep(0.1)
-        if  it != 26 and it != 0:
-            it = it + 1
-        else:
-            it = it - 1
 st.text(print_rangoli(s))
