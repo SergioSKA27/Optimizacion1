@@ -221,3 +221,165 @@ if len(restrictions) and len(restrictions[0]) > 0  :
     print_restricciones(restrictions)
 
 st.latex(str(obf.free_symbols)+ ' ≥ 0')
+
+def add_slackvars(restricciones,obf,probtype):
+    slckvar = []
+    #Agrega las variables de holgura
+    if probtype == "Maximizar":
+        for i in range(len(restricciones)):
+            z = sp.Symbol('s'+str(i+1))
+            if restricciones[i]['op'] == '≤':
+            #Añadimos la variable de holgura
+                restricciones[i]['exp'] = z+ restricciones[i]['exp']
+                obf = z+obf
+                slckvar.append(z)
+            if restricciones[i]['op'] == '≥':
+            #Añadimos la variable de exceso
+                restricciones[i]['exp'] = restricciones[i]['exp'] - z
+                obf = obf + z
+                slckvar.append(z)
+
+    else:
+        for i in range(len(restricciones)):
+            z = sp.Symbol('s'+str(i+1))
+            if restricciones[i]['op'] == '≤':
+            #Añadimos la variable de holgura
+                restricciones[i]['exp'] = restricciones[i]['exp'] + z
+                obf = obf + z
+                slckvar.append(z)
+            if restricciones[i]['op'] == '≥':
+            #Añadimos la variable de exceso
+                restricciones[i]['exp'] = restricciones[i]['exp'] - z
+                obf = obf + z
+                slckvar.append(z)
+
+
+    return restricciones, obf, slckvar
+
+def add_artificialvar(restricciones,obf,probtype):
+    art = []
+    m = sp.Symbol('M')
+    if probtype == "Maximizar":
+        for i in range(len(restricciones)):
+            z = sp.Symbol('R'+str(i+1))
+            if restricciones[i]['op'] == '=':
+            #Añadimos la variable de holgura
+                restricciones[i]['exp'] = restricciones[i]['exp'] + z
+                obf = obf-m*z
+                art.append(z)
+            if restricciones[i]['op'] == '≥':
+            #Añadimos la variable de exceso
+                restricciones[i]['exp'] = restricciones[i]['exp'] + z
+                obf = obf - m*z
+                art.append(z)
+    else:
+        for i in range(len(restricciones)):
+            z = sp.Symbol('R'+str(i+1))
+            if restricciones[i]['op'] == '=':
+            #Añadimos la variable de holgura
+                restricciones[i]['exp'] = restricciones[i]['exp'] + z
+                obf = obf + m*z
+                art.append(z)
+            if restricciones[i]['op'] == '≥':
+            #Añadimos la variable de exceso
+                restricciones[i]['exp'] = restricciones[i]['exp'] - z
+                obf = obf + m*z
+                art.append(z)
+
+
+    return restricciones, obf, art
+
+def to_matrix(restricciones, obf,slck,art,obj):
+    nb = [sp.Poly(restricciones[i]['exp']).coeffs() for i in range(len(restricciones))]
+    n = [[nb[i][j] for j in range(len(obf.free_symbols))] for i in range(len(restricciones))]
+    a = []
+    obff = sp.Poly(obf).coeffs()
+    obff += [0]*(len(slck))
+    if obj == "Maximizar":
+        obff += [sp.Symbol('M')*-1]*(len(art))
+    else:
+        obff += [sp.Symbol('M')]*(len(art))
+
+    for i in range(len(restricciones)):
+        temp = [0]*(len(slck))
+        if restricciones[i]['op'] == '≤':
+            temp[i] = 1
+        if restricciones[i]['op'] == '≥':
+            temp[i] = -1
+        if restricciones[i]['op'] == '=':
+            continue
+        n[i] += temp
+
+    for i in range(len(n)):
+        if restricciones[i]['op'] == '=' or restricciones[i]['op'] == '≥':
+            for j in range(len(n)):
+                if i == j:
+                    n[j].append(1)
+                else:
+                    n[j].append(0)
+        else:
+            continue
+
+
+
+
+
+
+
+
+
+    return n, obff
+
+
+
+_restrictions, _obf,slck = add_slackvars(list(restrictions), obf, obj)
+
+st.write("Después de agregar las variables de holgura y exceso: ")
+#st.write(_restrictions, _obf, slck)
+#Imprime la función objetivo en latex
+if obj == "Maximizar":
+    st.subheader("$$ Max\ Z = " + sp.latex(obf)+'$$')
+else:
+    st.subheader("$$ Min Z = " + sp.latex(obf)+'$$')
+
+#Imprime las restricciones en latex
+st.write('Sujeto a: ')
+if len(restrictions) and len(restrictions[0]) > 0  :
+    print_restricciones(_restrictions)
+
+st.latex(str(_obf.free_symbols)+ ' ≥ 0')
+
+
+_restrictionss, _obff,art = add_artificialvar(_restrictions[:], _obf, obj)
+
+#st.write(_restrictionss, _obff, art)
+if len(art) > 0:
+    #Imprime la función objetivo en latex
+    st.write("Después de agregar las variables artificiales: ")
+    if obj == "Maximizar":
+        st.subheader("$$ Max\ Z = " + sp.latex(obf)+'$$')
+    else:
+        st.subheader("$$ Min Z = " + sp.latex(obf)+'$$')
+
+    #Imprime las restricciones en latex
+    st.write('Sujeto a: ')
+    if len(restrictions) and len(restrictions[0]) > 0  :
+        print_restricciones(_restrictions)
+
+    st.latex(str(_obf.free_symbols)+ ' ≥ 0')
+
+
+
+st.write("Convertimos las restricciones a forma estándar: ")
+
+a, b = to_matrix(restrictions, obf,slck,art,obj)
+
+if obj == "Maximizar":
+        st.subheader("$$ Max\ Z = " + sp.latex(sp.Matrix(b).T)+'$$')
+else:
+    st.subheader("$$ Min Z = " + sp.latex(sp.Matrix(b).T)+'$$')
+
+st.write('Sujeto a: ')
+#st.write(a)
+st.latex(sp.latex(sp.Matrix(a))+sp.latex(sp.Matrix(list(obf.free_symbols)+slck+art))+ '=' +sp.latex(sp.Matrix([restrictions[i]['val'] for i in range(len(restrictions))])))
+

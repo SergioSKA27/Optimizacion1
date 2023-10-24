@@ -6,21 +6,21 @@ from itertools import combinations
 import pandas as pd
 from streamlit.components.v1 import html
 from streamlit_extras.switch_page_button import switch_page
-from st_pages import Page, show_pages, add_page_title
+#from st_pages import Page, show_pages, add_page_title
 #Autor: Sergio Demis Lopez Martinez, 2023.
 
 
 # Specify what pages should be shown in the sidebar, and what their titles and icons
 # should be
-show_pages(
-    [
-        Page("Main.py", "Inicio", ":comet:"),
-        Page("pages/Home.py", "Home", "🏠"),
-        Page("pages/grafico.py", "Metodo Grafico", ":chart_with_upwards_trend:"),
-        Page("pages/simplexmatrix.py","Simplex Matricial", ":diamond_shape_with_a_dot_inside:"),
-        Page("pages/tableusimplex.py","Tableau Simplex", ":abacus:"),
-    ]
-)
+#show_pages(
+#    [
+#        Page("Main.py", "Inicio", ":comet:"),
+#        Page("pages/Home.py", "Home", "🏠"),
+#        Page("pages/grafico.py", "Metodo Grafico", ":chart_with_upwards_trend:"),
+#        Page("pages/simplexmatrix.py","Simplex Matricial", ":diamond_shape_with_a_dot_inside:"),
+#        Page("pages/tableusimplex.py","Tableau Simplex", ":abacus:"),
+#    ]
+#)
 #set the configuration
 st.set_page_config(page_title="Método Gráfico", page_icon=":snowflake:", layout="wide", initial_sidebar_state="collapsed")
 #.....................................Data Input.............................................
