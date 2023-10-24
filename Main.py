@@ -28,17 +28,8 @@ st.set_page_config(page_title="Método Gráfico", page_icon=":snowflake:", layou
 st.markdown(
 r'''
 <style>
-.css-1wrcr25 {
-  display: flex;
-  flex-direction: row;
-  -moz-box-pack: start;
-  place-content: flex-start;
-  -moz-box-align: stretch;
-  align-items: stretch;
-  position: absolute;
-  inset: 0px;
-  overflow: hidden;
-  background-color: #e5e5f7;
+body{
+background-color: #e5e5f7;
 opacity: 0.8;
 background-image:  linear-gradient(30deg, #444cf7 12%, transparent 12.5%, transparent 87%, #444cf7 87.5%, #444cf7), linear-gradient(150deg, #444cf7 12%, transparent 12.5%, transparent 87%, #444cf7 87.5%, #444cf7), linear-gradient(30deg, #444cf7 12%, transparent 12.5%, transparent 87%, #444cf7 87.5%, #444cf7), linear-gradient(150deg, #444cf7 12%, transparent 12.5%, transparent 87%, #444cf7 87.5%, #444cf7), linear-gradient(60deg, #444cf777 25%, transparent 25.5%, transparent 75%, #444cf777 75%, #444cf777), linear-gradient(60deg, #444cf777 25%, transparent 25.5%, transparent 75%, #444cf777 75%, #444cf777);
 background-size: 20px 35px;
