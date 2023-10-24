@@ -25,19 +25,19 @@ html(r'''
         display: flex;
         background: transparent;
         min-height: 100vh;
-        align-items: right;
-        justify-content: top;
+        align-items: center;
+        justify-content: center;
+        scale: 0.5;
     }
     .content {
         width: 100%;
-        justify-content: right;
+        justify-content: center;
     }
     .content h2 {
         color: #fff;
         font-size: 8em;
         position: absolute;
         transform: translate(-50%, -50%);
-        transform: scale(0.5);
     }
     .content h2:nth-child(1) {
         color: transparent;
@@ -88,7 +88,7 @@ html(r'''
 </section>
 </body>
 </html>
-''',height=120)
+''',height=70)
 
 st.divider()
 ranp = None
